@@ -7,14 +7,17 @@ Gebruik:
 """
 
 import sys
+from pathlib import Path
 import os
 import platform
 import shutil
 import datetime as dt
-from pathlib import Path
 
 from dotenv import load_dotenv
 import psutil
+
+ROOT_DIR = Path(__file__).resolve().parent
+sys.path.append(str(ROOT_DIR))
 
 # Lokale imports (pkg in dezelfde repo)
 from watchdog.notify import DiscordNotifier  # type: ignore
