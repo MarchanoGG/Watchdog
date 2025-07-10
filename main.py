@@ -59,7 +59,7 @@ def generate_status_report() -> str:
         f"**RAM**: {human_bytes(mem.used)} / {human_bytes(mem.total)} "
         f"({mem.percent}%)  \n"
         f"**Disk** (/): {human_bytes(disk.used)} / {human_bytes(disk.total)} "
-        f"({disk.percent}%)"
+        f"({disk.used / disk.total * 100:.1f}%)"
     )
     return report
 
