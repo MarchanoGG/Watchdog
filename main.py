@@ -20,7 +20,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 sys.path.append(str(ROOT_DIR))
 
 # Lokale imports (pkg in dezelfde repo)
-from watchdog.notify import DiscordNotifier  # type: ignore
+from notify.discord import DiscordNotifier 
 
 # .env laden (staat in project-root)
 ENV_PATH = Path(__file__).parent / ".env"
