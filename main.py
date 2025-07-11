@@ -1,36 +1,29 @@
 #!/usr/bin/env python3
 """
-WatchDog CLI-entrypoint.
+WatchDog CLI entrypoint.
 
-Gebruik:
+Usage:
     watchdog [backup|status|notify|all]
 """
 
 import sys
-from pathlib import Path
-import os
 import platform
 import shutil
 import datetime as dt
+from pathlib import Path
 
-from dotenv import load_dotenv
 import psutil
-
-ROOT_DIR = Path(__file__).resolve().parent
-sys.path.append(str(ROOT_DIR))
-
-# Local imports (pkg in same repo)
+from dotenv import load_dotenv
 from watchdog.core.notify import DiscordNotifier
 
+# Load environment variables from .env file if it exists
 ENV_PATH = Path(__file__).parent / ".env"
 if ENV_PATH.exists():
     load_dotenv(dotenv_path=ENV_PATH)
 
-# ---------- helpers ---------------------------------------------------------
-
 
 def human_bytes(num: int) -> str:
-    """Converteer bytes naar leesbaar formaat."""
+    """Convert bytes to a human-readable string."""
     for unit in ["B", "KB", "MB", "GB", "TB", "PB"]:
         if num < 1024:
             return f"{num:.2f} {unit}"
@@ -39,7 +32,7 @@ def human_bytes(num: int) -> str:
 
 
 def generate_status_report() -> str:
-    """Maak een simpel statusrapport van de host."""
+    """Generate a basic system status report."""
     now = dt.datetime.now()
     uname = platform.uname()
     uptime_seconds = (dt.datetime.now() - dt.datetime.fromtimestamp(psutil.boot_time())).total_seconds()
@@ -49,48 +42,62 @@ def generate_status_report() -> str:
     mem = psutil.virtual_memory()
     disk = shutil.disk_usage("/")
 
-    report = (
-        f"**WatchDog Statusrapport — {now:%Y-%m-%d %H:%M:%S}**\n"
-        f"Host: `{uname.node}`  \n"
-        f"OS: {uname.system} {uname.release} ({uname.machine})  \n"
-        f"Uptime: {uptime_str}  \n\n"
-        f"**CPU**: {cpu_usage}%  \n"
-        f"**RAM**: {human_bytes(mem.used)} / {human_bytes(mem.total)} "
-        f"({mem.percent}%)  \n"
+    return (
+        f"**WatchDog Status Report — {now:%Y-%m-%d %H:%M:%S}**\n"
+        f"Host: `{uname.node}`\n"
+        f"OS: {uname.system} {uname.release} ({uname.machine})\n"
+        f"Uptime: {uptime_str}\n\n"
+        f"**CPU**: {cpu_usage}%\n"
+        f"**RAM**: {human_bytes(mem.used)} / {human_bytes(mem.total)} ({mem.percent}%)\n"
         f"**Disk** (/): {human_bytes(disk.used)} / {human_bytes(disk.total)} "
         f"({disk.used / disk.total * 100:.1f}%)"
     )
-    return report
 
 
-# ---------- CLI -------------------------------------------------------------
+def run_backup() -> None:
+    """Placeholder for backup functionality."""
+    print("Backup service not implemented yet.")
+    # TODO: from watchdog.core.backup.backup_service import BackupService
+    # BackupService().run_backup()
+
+
+def run_status() -> None:
+    """Generate and print system status, then send it to Discord."""
+    report = generate_status_report()
+    print(report)
+
+    try:
+        DiscordNotifier().send(content=report)
+        print("Status report successfully sent to Discord.")
+    except Exception as exc:
+        print(f"[ERROR] Failed to send to Discord: {exc}")
+
+
+def run_notify() -> None:
+    """Send a test notification to Discord."""
+    try:
+        DiscordNotifier().send(content="Test message: WatchDog notify test successful.")
+        print("Test notification sent.")
+    except Exception as exc:
+        print(f"[ERROR] Failed to send to Discord: {exc}")
+
+
+def show_help() -> None:
+    """Show usage instructions."""
+    print("Usage: watchdog [backup|status|notify|all]")
 
 
 def main() -> None:
-    command = sys.argv[1] if len(sys.argv) > 1 else "help"
+    """Main CLI dispatcher."""
+    commands = {
+        "backup": run_backup,
+        "status": run_status,
+        "notify": run_notify,
+        "all": lambda: [run_backup(), run_status()],
+    }
 
-    if command == "backup":
-        print("Backup-service nog niet geïmplementeerd.")
-        # TODO: BackupService().run_backup()
-    elif command == "status":
-        report = generate_status_report()
-        print(report)  # Toon lokaal
-
-        try:
-            notifier = DiscordNotifier()
-            notifier.send(content=report)
-            print("Statusrapport succesvol naar Discord gestuurd.")
-        except Exception as exc:  # noqa: BLE001
-            print(f"Fout bij verzenden naar Discord: {exc}")
-    elif command == "notify":
-        try:
-            notifier = DiscordNotifier()
-            notifier.send(content="Testbericht: WatchDog notify-test geslaagd.")
-            print("Testnotificatie verstuurd.")
-        except Exception as exc:  # noqa: BLE001
-            print(f"Fout bij verzenden naar Discord: {exc}")
-    else:
-        print("Gebruik: watchdog [backup|status|notify|all]")
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "help"
+    commands.get(cmd, show_help)()
 
 
 if __name__ == "__main__":
