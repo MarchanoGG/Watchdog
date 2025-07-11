@@ -19,10 +19,9 @@ import psutil
 ROOT_DIR = Path(__file__).resolve().parent
 sys.path.append(str(ROOT_DIR))
 
-# Lokale imports (pkg in dezelfde repo)
-from watchdog.notify import DiscordNotifier
+# Local imports (pkg in same repo)
+from watchdog.core.notify import DiscordNotifier
 
-# .env laden (staat in project-root)
 ENV_PATH = Path(__file__).parent / ".env"
 if ENV_PATH.exists():
     load_dotenv(dotenv_path=ENV_PATH)
