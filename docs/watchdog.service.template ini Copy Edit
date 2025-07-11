@@ -1,0 +1,17 @@
+[Unit]
+Description=WatchDog Daemon (status push every 3h)
+After=network-online.target
+
+[Service]
+Type=simple
+User=watchdog
+WorkingDirectory=/opt/watchdog
+ExecStart=/opt/watchdog/.venv/bin/python /opt/watchdog/watchdog/daemon.py
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/opt/watchdog/.env
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
