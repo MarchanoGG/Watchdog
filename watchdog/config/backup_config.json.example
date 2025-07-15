@@ -1,0 +1,28 @@
+{
+  "servers": [
+    {
+      "name": "YourServerName",
+      "ip": "your.server.local",
+      "description": "Describe your server here",
+      "ssh": {
+        "user": "root",
+        "port": 22,
+        "password": "env:YOUR_SERVER_PASSWORD"
+      },
+      "targets": [
+        {
+          "path": "/var/www/",
+          "type": "directory",
+          "sudo": true,
+          "verify": true
+        },
+        {
+          "path": "/etc/",
+          "type": "list",
+          "sudo": true,
+          "verify": false
+        }
+      ]
+    }
+  ]
+}

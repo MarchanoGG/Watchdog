@@ -14,3 +14,6 @@ dist/
 logs/
 tmp/
 *.log
+
+# Backup config (project specific)
+watchdog/config/backup_config.json
