@@ -15,6 +15,8 @@ from pathlib import Path
 import psutil
 from dotenv import load_dotenv
 from watchdog.core.notify import DiscordNotifier
+from watchdog.core.backup.backup_service import BackupService
+from watchdog.core.backup.config_loader import BackupConfig
 
 # Load environment variables from .env file if it exists
 ENV_PATH = Path(__file__).parent / ".env"
@@ -55,10 +57,13 @@ def generate_status_report() -> str:
 
 
 def run_backup() -> None:
-    """Placeholder for backup functionality."""
-    print("Backup service not implemented yet.")
-    # TODO: from watchdog.core.backup.backup_service import BackupService
-    # BackupService().run_backup()
+    try:
+        config = BackupConfig(Path(__file__).parent / "config/backup_config.json")
+        backup_service = BackupService(config)
+        backup_service.backup_all()
+        print("[OK] Backup completed successfully.")
+    except Exception as e:
+        print(f"[ERROR] Backup failed: {e}")
 
 
 def run_status() -> None:
