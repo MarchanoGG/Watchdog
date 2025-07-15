@@ -7,13 +7,15 @@ from datetime import datetime
 class BackupService:
     def __init__(self, config):
         self.config = config
+        self.logger = WatchdogLogger("backup")
 
     def backup_all(self):
-        self.logger.info(f"Backup gestart voor {server['name']}")
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         servers = self.config.get_servers()
 
         for server in servers:
+            self.logger.info(f"Backup gestart voor {server['name']}")
+
             ssh_cfg = server["ssh"]
             ssh = SSHHandler(
                 host=server["ip"],
@@ -24,7 +26,7 @@ class BackupService:
             ssh.connect()
             rsync = RsyncHandler(server["ip"], user=ssh_cfg["user"], port=ssh_cfg.get("port", 22))
 
-            # Maak datum/server map één keer per server
+            # Create local backup directory
             local_base = Path(f"/mnt/ssd/backups/{timestamp}/{server['name'].lower()}/")
             local_base.mkdir(parents=True, exist_ok=True)
 
