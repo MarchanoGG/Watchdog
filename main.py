@@ -58,7 +58,7 @@ def generate_status_report() -> str:
 
 def run_backup() -> None:
     try:
-        config = BackupConfig(Path(__file__).parent / "config/backup_config.json")
+        config = BackupConfig(Path(__file__).parent / "watchdog/config/backup_config.json")
         backup_service = BackupService(config)
         backup_service.backup_all()
         print("[OK] Backup completed successfully.")
