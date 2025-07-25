@@ -1,4 +1,5 @@
 import paramiko
+from watchdog.utils.logger import WatchdogLogger
 
 class SSHHandler:
     def __init__(self, host, username, password, port=22):
@@ -7,6 +8,7 @@ class SSHHandler:
         self.password = password
         self.port = port
         self.client = None
+        self.logger = WatchdogLogger("SSHHandler")
 
     def connect(self):
         self.client = paramiko.SSHClient()
@@ -17,10 +19,13 @@ class SSHHandler:
             username=self.username,
             password=self.password
         )
+        self.logger.info(f"Connected to {self.host} as {self.username}")
 
     def exec_sudo(self, command):
         full_cmd = f'echo "{self.password}" | sudo -S {command}'
         stdin, stdout, stderr = self.client.exec_command(full_cmd)
+        self.logger.info(f"Executed command: {command}")
+        
         return stdout.read().decode(), stderr.read().decode()
 
     def close(self):
