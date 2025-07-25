@@ -42,7 +42,7 @@ def main() -> None:
     print("WatchDog daemon started.")
 
     # Schedule Pulse once per day
-    schedule.every().day.at("21:00").do(run_pulse)
+    schedule.every().day.at("22:30").do(run_pulse)
 
     # Keep running
     while True:
