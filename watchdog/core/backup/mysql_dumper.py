@@ -49,11 +49,18 @@ class MySQLDumper:
             f"--all-databases {extra} | gzip > {remote_tmp}"
         )
 
-        out, err = self.ssh.exec(dump_cmd)
-        if err:
-            self.logger.error(f"mysqldump error: {err}")
+        out, err, code = self.ssh.exec(dump_cmd)
+
+        # Check for insecure password usage
+        insecure_msg = "Using a password on the command line interface can be insecure."
+        err_clean = err.replace(insecure_msg, "").strip()
+
+        if code != 0:
+            self.logger.error(f"mysqldump exit {code}: {err_clean}")
             raise RuntimeError("MySQL dump failed")
-        
+        if err_clean:
+            self.logger.warning(f"mysqldump stderr: {err_clean}")
+
         self.rsync.download(remote_tmp, str(self.local_base))
         self.ssh.exec_sudo(f"rm {remote_tmp}")
 
