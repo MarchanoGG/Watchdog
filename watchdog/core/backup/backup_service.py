@@ -29,11 +29,19 @@ class BackupService:
             # Create local backup directory
             local_base = Path(f"/mnt/ssd/backups/{timestamp}/{server['name'].lower()}/")
             local_base.mkdir(parents=True, exist_ok=True)
+            
+            # Collect exclude patterns
+            exclude_flags = " ".join(
+                f"--exclude='{pattern}'" for pattern in server.get("excludes", [])
+            )
 
             for target in server["targets"]:
                 remote_tmp = f"/tmp/backup_{Path(target['path']).name}.tar.gz"
                 
-                ssh.exec_sudo(f"tar -czf {remote_tmp} {target['path']}")
+                ssh.exec_sudo(
+                    f"tar -czf {remote_tmp} {exclude_flags} {target['path']}"
+                )
+                
                 rsync.download(remote_tmp, str(local_base))
                 ssh.exec_sudo(f"rm {remote_tmp}")
 

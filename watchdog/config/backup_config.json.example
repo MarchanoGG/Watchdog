@@ -9,6 +9,9 @@
         "port": 22,
         "password": "env:YOUR_SERVER_PASSWORD"
       },
+      "excludes": [
+        "node_modules"
+      ],
       "targets": [
         {
           "path": "/var/www/",
