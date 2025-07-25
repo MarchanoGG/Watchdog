@@ -13,4 +13,10 @@ class BackupConfig:
             if server.get("ssh", {}).get("password", "").startswith("env:"):
                 env_var = server["ssh"]["password"].split("env:")[1]
                 server["ssh"]["password"] = os.getenv(env_var)
+
+            if (mysql := server.get("mysql")) and isinstance(mysql.get("password"), str):
+                if mysql["password"].startswith("env:"):
+                    env_var = mysql["password"].split("env:")[1]
+                    mysql["password"] = os.getenv(env_var)
+                    
         return servers

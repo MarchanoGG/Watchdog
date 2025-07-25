@@ -9,6 +9,13 @@
         "port": 22,
         "password": "env:YOUR_SERVER_PASSWORD"
       },
+      "mysql": {
+        "enabled": true,
+        "user": "root",
+        "password": "env:MYSQL_ROOT_PASSWORD",
+        "port": 3306,
+        "dump_options": "--single-transaction --quick --lock-tables=false"
+      },
       "excludes": [
         "node_modules"
       ],

@@ -19,7 +19,7 @@ class PulseService:
         self.backup_cfg = BackupConfig(cfg_path)
         self.notifier = DiscordNotifier()
 
-    # Public API ---------------------------------------------------------
+    # Public API
 
     def run(self) -> None:
         """Entry-point for daemon/CLI."""
@@ -33,8 +33,9 @@ class PulseService:
             self.logger.error(f"Pulse failed: {exc}")
             self.notifier.send(content=f"❌ **Pulse {ts} failed:** ```{exc}```")
 
-    # Internal helpers ---------------------------------------------------
 
+    # Internal helpers
+    
     def _run_backups(self, timestamp: str) -> bool:
         """Run all backups serially; return True on success."""
         self.logger.info("Starting backups…")

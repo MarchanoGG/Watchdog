@@ -1,5 +1,6 @@
 from watchdog.core.backup.ssh_handler import SSHHandler
 from watchdog.core.backup.rsync_handler import RsyncHandler
+from watchdog.core.backup.mysql_dumper import MySQLDumper
 from watchdog.utils.logger import WatchdogLogger
 from pathlib import Path
 from datetime import datetime
@@ -38,6 +39,16 @@ class BackupService:
                 f"--exclude='{pattern}'" for pattern in server.get("excludes", [])
             )
             self.logger.info(f"Excluding patterns: {exclude_flags}")
+            
+            # MySQL backup
+            if mysql_cfg := server.get("mysql"):
+                MySQLDumper(
+                    ssh=ssh,
+                    rsync=rsync,
+                    mysql_cfg=mysql_cfg,
+                    server_name=server["name"],
+                    local_base=local_base,
+                ).dump()
 
             for target in server["targets"]:
                 self.logger.info(f"Backing up {target['path']} from {server['name']}")

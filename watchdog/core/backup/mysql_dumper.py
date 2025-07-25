@@ -1,0 +1,60 @@
+"""
+    MySQL dump helper - creates a gz-compressed dump on the remote host
+    and downloads it via rsync.
+"""
+from pathlib import Path
+from datetime import datetime
+from typing import Dict
+
+from watchdog.utils.logger import WatchdogLogger
+from .ssh_handler import SSHHandler
+from .rsync_handler import RsyncHandler
+
+
+class MySQLDumper:
+    def __init__(
+        self,
+        ssh: SSHHandler,
+        rsync: RsyncHandler,
+        mysql_cfg: Dict,
+        server_name: str,
+        local_base: Path,
+    ) -> None:
+        self.ssh = ssh
+        self.rsync = rsync
+        self.cfg = mysql_cfg
+        self.server_name = server_name
+        self.local_base = local_base
+        self.logger = WatchdogLogger("backup")
+
+    def dump(self) -> None:
+        if not self.cfg.get("enabled", True):
+            self.logger.info(f"MySQL dump disabled for {self.server_name}")
+            return
+
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        remote_tmp = f"/tmp/mysql_{ts}.sql.gz"
+        local_file = self.local_base / f"mysql_{ts}.sql.gz"
+
+        user = self.cfg["user"]
+        pw   = self.cfg["password"]
+        port = self.cfg.get("port", 3306)
+        extra = self.cfg.get("dump_options", "")
+
+        self.logger.info(f"Dumping MySQL on {self.server_name} …")
+
+        # Note: using single quotes around password to avoid issues with special chars
+        dump_cmd = (
+            f"mysqldump -h127.0.0.1 -P{port} -u{user} -p'{pw}' "
+            f"--all-databases {extra} | gzip > {remote_tmp}"
+        )
+
+        out, err = self.ssh.exec_sudo(dump_cmd)
+        if err:
+            self.logger.error(f"mysqldump error: {err}")
+            raise RuntimeError("MySQL dump failed")
+        
+        self.rsync.download(remote_tmp, str(self.local_base))
+        self.ssh.exec_sudo(f"rm {remote_tmp}")
+
+        self.logger.info(f"MySQL dump saved → {local_file}")
