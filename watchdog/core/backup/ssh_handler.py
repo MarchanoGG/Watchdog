@@ -24,8 +24,12 @@ class SSHHandler:
     def exec_sudo(self, command):
         full_cmd = f'echo "{self.password}" | sudo -S {command}'
         stdin, stdout, stderr = self.client.exec_command(full_cmd)
+        self.logger.info(f"Executed sudo command: {command}")
+        return stdout.read().decode(), stderr.read().decode()
+
+    def exec(self, command):
+        stdin, stdout, stderr = self.client.exec_command(command)
         self.logger.info(f"Executed command: {command}")
-        
         return stdout.read().decode(), stderr.read().decode()
 
     def close(self):

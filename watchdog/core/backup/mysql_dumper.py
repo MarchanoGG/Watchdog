@@ -49,7 +49,7 @@ class MySQLDumper:
             f"--all-databases {extra} | gzip > {remote_tmp}"
         )
 
-        out, err = self.ssh.exec_sudo(dump_cmd)
+        out, err = self.ssh.exec(dump_cmd)
         if err:
             self.logger.error(f"mysqldump error: {err}")
             raise RuntimeError("MySQL dump failed")
