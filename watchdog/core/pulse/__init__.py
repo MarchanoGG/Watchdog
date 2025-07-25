@@ -1,1 +1,1 @@
-from .pulse import PulseService  # noqa: F401
+from .pulse_service import PulseService  # noqa: F401
