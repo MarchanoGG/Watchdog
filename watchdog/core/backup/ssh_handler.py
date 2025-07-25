@@ -8,7 +8,7 @@ class SSHHandler:
         self.password = password
         self.port = port
         self.client = None
-        self.logger = WatchdogLogger("SSHHandler")
+        self.logger = WatchdogLogger("backup")
 
     def connect(self):
         self.client = paramiko.SSHClient()

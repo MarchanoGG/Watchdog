@@ -7,7 +7,7 @@ from datetime import datetime
 class BackupService:
     def __init__(self, config):
         self.config = config
-        self.logger = WatchdogLogger("BackupService")
+        self.logger = WatchdogLogger("backup")
 
     def backup_all(self):
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
