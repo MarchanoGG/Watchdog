@@ -52,7 +52,7 @@ class MySQLDumper:
         out, err, code = self.ssh.exec(dump_cmd)
 
         # Check for insecure password usage
-        insecure_msg = "Using a password on the command line interface can be insecure."
+        insecure_msg = "mysqldump: [Warning] Using a password on the command line interface can be insecure."
         err_clean = err.replace(insecure_msg, "").strip()
 
         if code != 0:
