@@ -1,5 +1,5 @@
 [Unit]
-Description=WatchDog Daemon (status push every 3h)
+Description=WatchDog Daemon (daily Pulse at 21:00)
 After=network-online.target
 
 [Service]

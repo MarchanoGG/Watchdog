@@ -15,6 +15,7 @@ from pathlib import Path
 import psutil
 from dotenv import load_dotenv
 from watchdog.core.notify import DiscordNotifier
+from watchdog.core.pulse import PulseService
 from watchdog.core.backup.backup_service import BackupService
 from watchdog.core.backup.config_loader import BackupConfig
 
@@ -56,6 +57,9 @@ def generate_status_report() -> str:
     )
 
 
+def run_pulse() -> None:
+    PulseService().run()
+
 def run_backup() -> None:
     try:
         config = BackupConfig(Path(__file__).parent / "watchdog/config/backup_config.json")
@@ -96,9 +100,9 @@ def main() -> None:
     """Main CLI dispatcher."""
     commands = {
         "backup": run_backup,
-        "status": run_status,
+        "pulse": run_pulse,
         "notify": run_notify,
-        "all": lambda: [run_backup(), run_status()],
+        "all": lambda: [run_backup(), run_pulse()],
     }
 
     cmd = sys.argv[1] if len(sys.argv) > 1 else "help"
