@@ -20,9 +20,9 @@ def dump_header_footer_ok(path: Path) -> Tuple[bool, str]:
         with gzip.open(path, "rb") as fh:
             head = fh.readline(1024)
         with gzip.open(path, "rb") as fh:
-            fh.seek(0, 2)                              # ga naar EOF
+            fh.seek(0, 2)
             size = fh.tell()
-            fh.seek(-min(8192, size), 2)               # stap max 8 KiB terug
+            fh.seek(-min(8192, size), 2)
             tail = fh.read()
     except OSError as exc:
         return False, f"gzip error: {exc}"
