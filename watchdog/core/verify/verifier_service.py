@@ -44,7 +44,7 @@ class VerifierService:
             man = Manifest.load(mf)
             metrics["servers"] += 1
             for art in man.artifacts:
-                art_path = pulse_dir / man.server / art["path"]
+                art_path = pulse_dir / man.server.lower() / art["path"]
                 ok, w = self._verify_artifact(art, art_path)
                 metrics["files_checked"] += 1
                 if not ok:

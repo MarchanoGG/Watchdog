@@ -18,13 +18,15 @@ def dump_header_footer_ok(path: Path) -> Tuple[bool, str]:
     """Return True if header and footer look normal."""
     try:
         with gzip.open(path, "rb") as fh:
-            head = fh.readline(256)
+            head = fh.readline(1024)
         with gzip.open(path, "rb") as fh:
-            fh.seek(-min(4096, fh.tell()), 2) 
+            fh.seek(-min(8192, fh.tell()), 2)
             tail = fh.read()
     except OSError as exc:
         return False, f"gzip error: {exc}"
 
-    if HEADER_TOKEN not in head or FOOTER_TOKEN not in tail:
-        return False, "header/footer token missing"
+    if HEADER_TOKEN not in head:
+        return False, "header token missing"
+    if FOOTER_TOKEN not in tail:
+        return False, "footer token missing"
     return True, ""
