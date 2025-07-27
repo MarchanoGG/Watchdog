@@ -3,3 +3,4 @@ requests==2.32.3
 psutil>=5.9,<6.0
 schedule==1.2.0
 paramiko==3.5.1
+xxhash>=3.4.1

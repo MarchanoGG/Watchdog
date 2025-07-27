@@ -1,13 +1,14 @@
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any
+import json
 
 from watchdog.core.backup.backup_service import BackupService
 from watchdog.core.backup.config_loader import BackupConfig
 from watchdog.core.notify import DiscordNotifier
 from watchdog.utils.logger import WatchdogLogger
 
-from .dummy_verifier import DummyVerifier
+from watchdog.core.verify.verifier_service import VerifierService
 
 
 class PulseService:
@@ -49,13 +50,11 @@ class PulseService:
             return False
 
     def _run_verification(self, timestamp: str) -> tuple[bool, Dict[str, Any]]:
-        """Run (dummy) verification on the newest backup set."""
-        self.logger.info("Running dummy verification…")
+        self.logger.info("Running verification…")
         backup_dir = self.BACKUP_ROOT / timestamp
-        verifier = DummyVerifier()
-        result = verifier.verify(backup_dir)
-        ok = result.get("overall") == "PASSED"
-        self.logger.info(f"Verification result: {result}")
+        verifier = VerifierService()
+        result = verifier.verify_pulse(backup_dir)
+        ok = result["overall"] == "PASSED"
         return ok, result
 
     def _send_report(
@@ -76,10 +75,16 @@ class PulseService:
             "color": 0x00FF00 if backup_ok and verify_ok else 0xFF0000,
             "fields": [
                 {"name": "Back-ups", "value": status_backup, "inline": False},
-                {"name": "Verification", "value": status_verify, "inline": False},
                 {
-                    "name": "Details (dummy)",
-                    "value": f"```json\n{verify_data}```"[:1024],
+                    "name": "Verification",
+                    "value": status_verify +
+                    f"\nErrors: {len(verify_data['errors'])} | "
+                    f"Warn: {len(verify_data['warnings'])}",
+                    "inline": False,
+                },
+                {
+                    "name": "Details (JSON)",
+                    "value": f"```json\n{json.dumps(verify_data, indent=2)[:900]}```",
                     "inline": False,
                 },
             ],

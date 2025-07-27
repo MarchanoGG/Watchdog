@@ -2,6 +2,12 @@
     MySQL dump helper - creates a gz-compressed dump on the remote host
     and downloads it via rsync.
 """
+
+from __future__ import annotations
+
+from watchdog.core.verify.manifest import Manifest
+from watchdog.core.verify.checksum import sha256_stream, xxh3_stream
+
 from pathlib import Path
 from datetime import datetime
 from typing import Dict
@@ -19,12 +25,14 @@ class MySQLDumper:
         mysql_cfg: Dict,
         server_name: str,
         local_base: Path,
+        manifest: Manifest,
     ) -> None:
         self.ssh = ssh
         self.rsync = rsync
         self.cfg = mysql_cfg
         self.server_name = server_name
         self.local_base = local_base
+        self.manifest = manifest
         self.logger = WatchdogLogger("backup")
 
     def dump(self) -> None:
@@ -63,5 +71,15 @@ class MySQLDumper:
 
         self.rsync.download(remote_tmp, str(self.local_base))
         self.ssh.exec_sudo(f"rm {remote_tmp}")
+
+        sha = sha256_stream(local_file)
+        xxh = xxh3_stream(local_file)
+        self.manifest.add_artifact(
+            path=local_file,
+            sha256=sha,
+            size=local_file.stat().st_size,
+            art_type="mysql",
+            xxh3=xxh,
+        )
 
         self.logger.info(f"MySQL dump saved → {local_file}")
