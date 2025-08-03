@@ -4,9 +4,9 @@ Persistent WatchDog daemon.
 
 • Starts at system boot.
 • Runs the Pulse workflow every day at 21:00:
-      – all backups (serial)
-      – (dummy) verification
-      – Discord report
+      - all backups (serial)
+      - (dummy) verification
+      - Discord report
 
 See docs/watchdog.service.template for the systemd unit.
 """
@@ -18,6 +18,7 @@ import schedule
 from dotenv import load_dotenv
 
 from watchdog.core.pulse import PulseService
+from watchdog.core.status import StatusChecker
 
 # --------------------------------------------------------------------------- #
 # Environment
@@ -43,6 +44,10 @@ def main() -> None:
 
     # Schedule Pulse once per day
     schedule.every().day.at("22:30").do(run_pulse)
+    
+    # StatusChecker (runs in background thread)
+    cfg = ROOT_DIR / "watchdog" / "config" / "status_config.json"
+    StatusChecker(cfg).start()
 
     # Keep running
     while True:

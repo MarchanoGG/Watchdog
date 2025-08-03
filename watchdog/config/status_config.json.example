@@ -1,0 +1,17 @@
+{
+  "interval_sec": 30,                // check-interval (min 5 s)
+  "timeout_sec": 5,                  // HTTP-timeout per request
+  "targets": [
+    {
+      "name": "Blog",
+      "url": "https://bvt.decazoid.nl",
+      "method": "http"               // http | https | tcp
+    },
+    {
+      "name": "DB-port",
+      "host": "136.144.164.5",
+      "port": 3306,
+      "method": "tcp"
+    }
+  ]
+}
