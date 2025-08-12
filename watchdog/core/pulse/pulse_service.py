@@ -34,9 +34,8 @@ class PulseService:
             self.logger.error(f"Pulse failed: {exc}")
             self.notifier.send(content=f"❌ **Pulse {ts} failed:** ```{exc}```")
 
-
     # Internal helpers
-    
+
     def _run_backups(self, timestamp: str) -> bool:
         """Run all backups serially; return True on success."""
         self.logger.info("Starting backups…")
@@ -50,12 +49,55 @@ class PulseService:
             return False
 
     def _run_verification(self, timestamp: str) -> tuple[bool, Dict[str, Any]]:
+        """Run verification on the newest backup set."""
         self.logger.info("Running verification…")
         backup_dir = self.BACKUP_ROOT / timestamp
         verifier = VerifierService()
         result = verifier.verify_pulse(backup_dir)
         ok = result["overall"] == "PASSED"
         return ok, result
+
+    def _collect_backup_sizes(self, timestamp: str) -> Dict[str, Any]:
+        """
+        Scan /mnt/ssd/backups/<timestamp>/<server>/ and compute
+        per-server size and file count, plus a grand total.
+        """
+        pulse_dir = self.BACKUP_ROOT / timestamp
+        data: Dict[str, Any] = {"servers": [], "total_bytes": 0}
+
+        if not pulse_dir.exists():
+            return data
+
+        for server_dir in sorted([p for p in pulse_dir.iterdir() if p.is_dir()]):
+            bytes_sum = 0
+            files = 0
+            for f in server_dir.rglob("*"):
+                if f.is_file():
+                    try:
+                        st = f.stat()
+                        bytes_sum += st.st_size
+                        files += 1
+                    except OSError:
+                        # skip unreadable entries
+                        continue
+            data["servers"].append(
+                {"name": server_dir.name, "bytes": bytes_sum, "files": files}
+            )
+            data["total_bytes"] += bytes_sum
+
+        # sort servers by size desc
+        data["servers"].sort(key=lambda x: x["bytes"], reverse=True)
+        return data
+
+    @staticmethod
+    def _human_bytes(num: int) -> str:
+        units = ["B", "KB", "MB", "GB", "TB", "PB", "EB"]
+        n = float(num)
+        for u in units:
+            if n < 1024.0:
+                return f"{n:.2f} {u}"
+            n /= 1024.0
+        return f"{n:.2f} ZB"
 
     def _send_report(
         self,
@@ -66,9 +108,22 @@ class PulseService:
     ) -> None:
         """Compose and push the Discord embed."""
         status_backup = "✅ **Back-ups Success**" if backup_ok else "❌ **Back-ups Failed**"
-        status_verify = (
-            "✅ **Verification Success**" if verify_ok else "⚠️ **Verification Failed**"
-        )
+        status_verify = "✅ **Verification Success**" if verify_ok else "⚠️ **Verification Failed**"
+
+        # Build sizes field (safe even if backup failed; shows what exists)
+        sizes = self._collect_backup_sizes(timestamp)
+        if sizes["servers"]:
+            lines = [f"**Total**: {self._human_bytes(sizes['total_bytes'])}"]
+            for s in sizes["servers"]:
+                lines.append(
+                    f"- {s['name']}: {self._human_bytes(s['bytes'])} ({s['files']} files)"
+                )
+            sizes_text = "\n".join(lines)
+            # Discord field hard limit ~1024 chars
+            if len(sizes_text) > 1024:
+                sizes_text = sizes_text[:1000] + "\n… (truncated)"
+        else:
+            sizes_text = "_No backup files found for this pulse._"
 
         embed = {
             "title": f"📊  WatchDog Pulse — {timestamp}",
@@ -77,11 +132,12 @@ class PulseService:
                 {"name": "Back-ups", "value": status_backup, "inline": False},
                 {
                     "name": "Verification",
-                    "value": status_verify +
-                    f"\nErrors: {len(verify_data['errors'])} | "
-                    f"Warn: {len(verify_data['warnings'])}",
+                    "value": status_verify
+                    + f"\nErrors: {len(verify_data.get('errors', []))} | "
+                    + f"Warn: {len(verify_data.get('warnings', []))}",
                     "inline": False,
                 },
+                {"name": "Backup sizes", "value": sizes_text, "inline": False},
                 {
                     "name": "Details (JSON)",
                     "value": f"```json\n{json.dumps(verify_data, indent=2)[:900]}```",
